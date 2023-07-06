@@ -33,21 +33,6 @@ This repository contains the source code for an online store web application. Th
   ```
 - You should now be able to browse the products, add them to the shopping cart, and proceed with the checkout process.
 
-## Repository Structure
-
-The repository is organized as follows:
-
-- `index.php`: The main entry point of the application.
-- `config.php`: Configuration file for connecting to the database.
-- `assets/`: Directory containing CSS and JavaScript files for styling and interactivity.
-- `templates/`: Directory containing reusable templates for different parts of the application.
-- `sql/`: Directory containing the SQL script for creating the database schema and sample data.
-- `images/`: Directory for storing product images.
-
-## Contributing
-
-Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
