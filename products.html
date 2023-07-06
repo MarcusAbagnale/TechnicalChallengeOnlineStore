@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product CRUD - Add Product</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"> 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
+
+
+<body class="bg-dark text-light">
+  <div id="menu"></div>
+  <div id="app" class="container col-5 p-2">
+    <h2>Add Product</h2>
+    <form id="productForm" @submit.prevent="saveOrUpdateProduct">
+      <div class="mb-3">
+        <label for="name" class="form-label">Name:</label>
+        <input type="text" class="form-control" id="name" v-model="newProduct.name" required>
+      </div>
+      <div class="mb-3">
+        <label for="price" class="form-label">Price:</label>
+        <input type="number" class="form-control" id="price" v-model="newProduct.price" required>
+      </div>
+      <div class="mb-3">
+        <label for="type" class="form-label">Type:</label>
+        <select class="form-select" id="type" v-model="newProduct.type" required>
+          <option v-for="type in types" :value="type.name">{{ type.name }}</option>
+        </select>
+      </div>
+      <button v-if="!editingProduct" type="submit" class="btn btn-primary">Add Product</button>
+      <button v-if="editingProduct" type="submit" class="btn btn-primary">Update Product</button>
+      <button v-if="editingProduct" type="button" class="btn btn-secondary" @click="cancelEdit">Cancel</button>
+    </form>
+
+    <h2>Product List</h2>
+    <table id="productTable" class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Type</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="product in products" :key="product.id" :id="'product-' + product.id">
+          <td>{{ product.id }}</td>
+          <td>{{ product.name }}</td>
+          <td>{{ product.price }}</td>
+          <td>{{ product.type }}</td>
+          <td>
+            <button class="btn" @click="editProduct(product)">Edit</button>
+            <button class="btn" @click="deleteProduct(product.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        products: [],
+        newProduct: {
+          id: null,
+          name: '',
+          price: '',
+          type: ''
+        },
+        editingProduct: null,
+        types: [] 
+      },
+      mounted() {
+        this.fetchProducts();
+        this.fetchTypes(); 
+      },
+      methods: {
+        fetchProducts() {
+          axios.get('app/products_api.php')
+          .then(response => {
+            this.products = response.data;
+            this.initializeDataTable();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        fetchTypes() {
+          axios.get('app/types_api.php')
+          .then(response => {
+            this.types = response.data;
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        initializeDataTable() {
+          setTimeout(function () {
+            $('#productTable').DataTable();
+          }, 0);
+        },
+        saveOrUpdateProduct() {
+          if (this.editingProduct) {
+            this.updateProduct();
+          } else {
+            this.saveProduct();
+          }
+        },
+        saveProduct() {
+          axios.post('app/products_api.php', this.newProduct)
+          .then(response => {
+            const newProduct = response.data;
+            this.products.push(newProduct);
+            $('#productTable').DataTable().row.add(newProduct).draw();
+            this.resetNewProduct();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        updateProduct() {
+          axios.put(`app/products_api.php?id=${this.editingProduct.id}`, this.newProduct)
+          .then(response => {
+            const updatedProduct = response.data;
+            const index = this.products.findIndex(product => product.id === updatedProduct.id);
+            if (index > -1) {
+              this.products.splice(index, 1, updatedProduct);
+              $('#productTable').DataTable().row(`#product-${updatedProduct.id}`).data(updatedProduct).draw();
+            }
+            this.resetNewProduct();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        deleteProduct(productId) {
+          axios.delete(`app/products_api.php?id=${productId}`)
+          .then(response => {
+            this.products = this.products.filter(product => product.id !== productId);
+            $('#productTable').DataTable().row(`#product-${productId}`).remove().draw();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        editProduct(product) {
+          this.editingProduct = product;
+          this.newProduct = { ...product };
+        },
+        cancelEdit() {
+          this.editingProduct = null;
+          this.resetNewProduct();
+        },
+        resetNewProduct() {
+          this.newProduct = {
+            id: null,
+            name: '',
+            price: '',
+            type: ''
+          };
+        }
+      }
+    });
+
+    $('#menu').load('menu.html');
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

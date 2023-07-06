@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Shopping Cart</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"> 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body class="bg-dark text-light">
+
+  <div id="menu"></div>
+
+  <div class="container mt-5">
+    <h1>Shopping Cart</h1>
+
+    <div class="form-group">
+      <label for="product">Product:</label>
+      <select id="product" class="form-control"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="quantity">Quantity:</label>
+      <input type="number" id="quantity" class="form-control" min="1">
+    </div>
+
+    <button id="addBtn" class="btn btn-primary">Add to Cart</button>
+
+    <div class="cart-wrapper mt-5">
+      <h2>Shopping Cart</h2>
+      <table id="cart" class="table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Total</th>
+            <th>Tax</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3"></th>
+            <th>Total Price:</th>
+            <th>Total Tax:</th>
+            <th></th>
+          </tr>
+          <tr>
+            <th colspan="3"></th>
+            <th id="totalPrice">0.00</th>
+            <th id="totalTax">0.00</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <button id="checkoutBtn" class="btn btn-success">Checkout</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Load products from API
+      $.ajax({
+        url: 'app/products_api.php',
+        type: 'GET',
+        success: function(response) {
+          var products = JSON.parse(response);
+          var select = $('#product');
+          select.empty();
+
+          $.each(products, function(index, product) {
+            select.append($('<option></option>').attr('value', product.id).text(product.name));
+          });
+        }
+      });
+
+      // Add product to cart
+      $('#addBtn').click(function() {
+        var productId = $('#product').val();
+        var quantity = $('#quantity').val();
+
+        $.ajax({
+          url: 'app/products_api.php?id=' + productId,
+          type: 'GET',
+          success: function(response) {
+            var product = JSON.parse(response);
+            var totalPrice = product.price * quantity;
+
+            $.ajax({
+              url: 'app/types_api.php?id=' + productId,
+              type: 'GET',
+              success: function(response) {
+                var type = JSON.parse(response);
+                var tax = (type.tax / 100) * totalPrice;
+
+                var row = $('<tr></tr>');
+                row.append($('<td></td>').text(productId)); // Use the product ID instead of text
+                row.append($('<td></td>').text(quantity));
+                row.append($('<td></td>').text(product.price));
+                row.append($('<td></td>').text(totalPrice.toFixed(2)));
+                row.append($('<td></td>').text(tax.toFixed(2)));
+                row.append($('<td></td>').html('<button class="btn btn-danger removeBtn">Remove</button>'));
+
+                $('#cart tbody').append(row);
+
+                updateCartTotals();
+                $('#product').val('');
+                $('#quantity').val('');
+              }
+            });
+          }
+        });
+      });
+
+      // Remove item from cart
+      $('#cart').on('click', '.removeBtn', function() {
+        $(this).closest('tr').remove();
+        updateCartTotals();
+      });
+
+      // Update cart totals
+      function updateCartTotals() {
+        var totalPrice = 0;
+        var totalTax = 0;
+
+        $('#cart tbody tr').each(function() {
+          var row = $(this);
+          var quantity = parseFloat(row.find('td:eq(1)').text());
+          var unitPrice = parseFloat(row.find('td:eq(2)').text());
+          var tax = parseFloat(row.find('td:eq(4)').text());
+
+          totalPrice += quantity * unitPrice;
+          totalTax += tax;
+        });
+
+        $('#totalPrice').text('$' + totalPrice.toFixed(2));
+        $('#totalTax').text('$' + totalTax.toFixed(2));
+      }
+
+      // Checkout
+      $('#checkoutBtn').click(function() {
+        var items = [];
+
+        $('#cart tbody tr').each(function() {
+          var row = $(this);
+          var productId = parseInt(row.find('td:eq(0)').text()); // Parse the product ID as an integer
+          var productName = row.find('td:eq(0)').text();
+          var productPrice = parseFloat(row.find('td:eq(2)').text());
+          var quantity = parseFloat(row.find('td:eq(1)').text());
+          var subtotal = parseFloat(row.find('td:eq(3)').text());
+
+          items.push({
+            product: {
+              id: productId, // Use the parsed product ID
+              name: productName,
+              price: productPrice
+            },
+            quantity: quantity,
+            subtotal: subtotal
+          });
+        });
+
+        if (items.length > 0) {
+          $.ajax({
+            url: 'app/register_sale.php',
+            type: 'POST',
+            data: { items: items },
+            success: function(response) {
+              var result = JSON.parse(response);
+
+              if (result.success) {
+                alert('Checkout successful!');
+                $('#cart tbody').empty();
+                updateCartTotals();
+              } else {
+                alert('Checkout failed: ' + result.message);
+              }
+            }
+          });
+        } else {
+          alert('Please add items to the cart before checking out.');
+        }
+      });
+    });
+
+$('#menu').load('menu.html');
+</script>
+</body>
+</html>

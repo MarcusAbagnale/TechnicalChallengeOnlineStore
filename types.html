@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Type CRUD - Add Type</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css"> 
+  <style>
+    .navbar {
+      background-color: #f8f9fa;
+    }
+    .navbar-brand {
+      font-weight: bold;
+    }
+    .nav-link {
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<div id="menu"></div>
+
+<body class="bg-dark text-light">
+
+  <div id="app" class="container col-5 p-2">
+    <h2>Add Type</h2>
+    <form id="typeForm" @submit.prevent="saveOrUpdateType">
+      <div class="mb-3">
+        <label for="name" class="form-label">Name:</label>
+        <input type="text" class="form-control" id="name" v-model="newType.name" required>
+      </div>
+      <div class="mb-3">
+        <label for="tax" class="form-label">Tax:</label>
+        <input type="text" class="form-control" id="tax" v-model="newType.tax" required>
+      </div>
+      <button v-if="!editingType" type="submit" class="btn btn-primary">Add Type</button>
+      <button v-if="editingType" type="submit" class="btn btn-primary">Update Type</button>
+      <button v-if="editingType" type="button" class="btn btn-secondary" @click="cancelEdit">Cancel</button>
+    </form>
+
+    <h2>Type List</h2>
+    <table id="typeTable" class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Tax %</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="type in types" :key="type.id" :id="'type-' + type.id">
+          <td>{{ type.id }}</td>
+          <td>{{ type.name }}</td>
+          <td style="text-align: right; padding-right: 30px">{{ type.tax }}%</td>
+          <td>
+            <button class="btn" @click="editType(type)">Edit</button>
+            <button class="btn"  @click="deleteType(type.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        types: [],
+        newType: {
+          id: null,
+          name: '',
+          tax: '',
+        },
+        editingType: null
+      },
+      mounted() {
+        this.fetchTypes();
+      },
+      methods: {
+        fetchTypes() {
+          axios.get('app/types_api.php')
+          .then(response => {
+            this.types = response.data;
+            this.initializeDataTable();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        saveOrUpdateType() {
+          if (this.editingType) {
+            this.updateType();
+          } else {
+            this.saveType();
+          }
+        },
+        saveType() {
+          axios.post('app/types_api.php', this.newType)
+          .then(response => {
+            const newType = response.data;
+            this.types.push(newType);
+            this.resetNewType();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        updateType() {
+          axios.put(`app/types_api.php?id=${this.editingType.id}`, this.newType)
+          .then(response => {
+            const updatedType = response.data;
+            const index = this.types.findIndex(type => type.id === updatedType.id);
+            if (index > -1) {
+              this.types.splice(index, 1, updatedType);
+            }
+            this.resetNewType();
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        deleteType(typeId) {
+          axios.delete(`app/types_api.php?id=${typeId}`)
+          .then(response => {
+            this.types = this.types.filter(type => type.id !== typeId);
+          })
+          .catch(error => {
+            console.log(error);
+          });
+        },
+        editType(type) {
+          this.editingType = type;
+          this.newType = { ...type };
+        },
+        cancelEdit() {
+          this.editingType = null;
+          this.resetNewType();
+        },
+        resetNewType() {
+          this.newType = {
+            id: null,
+            name: '',
+            tax: ''
+          };
+        },
+        initializeDataTable() {
+          Vue.nextTick(() => {
+            $('#typeTable').DataTable();
+          });
+        }
+      }
+    });
+
+    $('#menu').load('menu.html');
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
