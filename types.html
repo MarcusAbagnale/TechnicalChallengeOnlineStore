@@ -56,8 +56,8 @@
           <td>{{ type.name }}</td>
           <td style="text-align: right; padding-right: 30px">{{ type.tax }}%</td>
           <td>
-            <button class="btn" @click="editType(type)">Edit</button>
-            <button class="btn"  @click="deleteType(type.id)">Delete</button>
+            <button class="btn btn-primary" @click="editType(type)">Edit</button>
+            <button class="btn btn-secondary"  @click="deleteType(type.id)">Delete</button>
           </td>
         </tr>
       </tbody>

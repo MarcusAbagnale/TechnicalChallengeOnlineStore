@@ -71,15 +71,13 @@ class TypesAPI {
             echo json_encode(['message' => 'Type deleted successfully']);
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete product: ' . $e->getMessage()]);
+            echo json_encode(['error' => 'Failed to delete type: ' . $e->getMessage()]);
         }
     }
 }
 
-
 $typesAPI = new TypesAPI($pdo);
 
-// Handle the API request based on the HTTP method
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $id = $_GET['id'];
     $typesAPI->getTypeById($id);
@@ -91,9 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 } elseif ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $data = json_decode(file_get_contents('php://input'), true);
     $typesAPI->updateType($data);
-} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $typesAPI->deleteType($data);
+} elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE' && isset($_GET['id'])) {
+    $id = $_GET['id'];
+    $typesAPI->deleteType($id);
+} else {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid request']);
 }
 
 ?>

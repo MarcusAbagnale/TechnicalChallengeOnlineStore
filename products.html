@@ -54,8 +54,8 @@
           <td>{{ product.price }}</td>
           <td>{{ product.type }}</td>
           <td>
-            <button class="btn" @click="editProduct(product)">Edit</button>
-            <button class="btn" @click="deleteProduct(product.id)">Delete</button>
+            <button class="btn btn-primary" @click="editProduct(product)">Edit</button>
+            <button class="btn btn-secondary" @click="deleteProduct(product.id)">Delete</button>
           </td>
         </tr>
       </tbody>
