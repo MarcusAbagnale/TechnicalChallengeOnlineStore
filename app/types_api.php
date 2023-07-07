@@ -64,16 +64,14 @@ class TypesAPI {
         }
     }
 
-    public function deleteType($data) {
-        $id = $data['id'];
-
+    public function deleteType($id) {
         try {
             $stmt = $this->pdo->prepare('DELETE FROM type WHERE id = ?');
             $stmt->execute([$id]);
             echo json_encode(['message' => 'Type deleted successfully']);
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete type: ' . $e->getMessage()]);
+            echo json_encode(['error' => 'Failed to delete product: ' . $e->getMessage()]);
         }
     }
 }

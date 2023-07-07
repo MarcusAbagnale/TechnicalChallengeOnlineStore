@@ -1,6 +1,6 @@
 <?php
 
-// Function to make an HTTP request and return the response
+
 function makeRequest($method, $url, $data = []) {
     $ch = curl_init($url);
 
@@ -17,7 +17,6 @@ function makeRequest($method, $url, $data = []) {
     return $response;
 }
 
-// Test the Create operation
 $createData = [
     'name' => 'Product A',
     'price' => 10.99,
@@ -26,15 +25,13 @@ $createData = [
 $response = makeRequest('POST', 'http://localhost/app/products_api.php', $createData);
 echo "Create Test: " . $response . "\n";
 
-// Extract the created product's ID from the response
+
 $createdProduct = json_decode($response, true);
 $createdProductId = $createdProduct['id'];
 
-// Test the Read operation
 $response = makeRequest('GET', 'http://localhost/app/products_api.php?id=' . $createdProductId);
 echo "Read Test: " . $response . "\n";
 
-// Test the Update operation
 $updateData = [
     'id' => $createdProductId,
     'name' => 'Updated Product A',
@@ -44,9 +41,13 @@ $updateData = [
 $response = makeRequest('PUT', 'http://localhost/app/products_api.php', $updateData);
 echo "Update Test: " . $response . "\n";
 
-// Test the Delete operation
-$deleteData = [
-    'id' => $createdProductId
-];
-$response = makeRequest('DELETE', 'http://localhost/app/products_api.php', $deleteData);
-echo "Delete Test: " . $response . "\n";
+
+$deleteId = $createdProductId;
+
+if (isset($deleteId)) {
+    $response = makeRequest('DELETE', 'http://localhost/app/products_api.php?id=' . $deleteId);
+    echo "Delete Test: " . $response . "\n";
+} else {
+    echo "Delete Test: Invalid request. Missing ID.\n";
+}
+
