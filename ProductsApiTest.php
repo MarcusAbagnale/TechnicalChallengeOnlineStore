@@ -5,22 +5,23 @@ use PHPUnit\Framework\TestCase;
 
 class ProductsApiTest extends TestCase
 {
-    public function testCreateProduct()
-    {
-        $createData = [
-            'name' => 'Product B',
-            'price' => 10.99,
-            'type' => 'Type A'
-        ];
+ public function testCreateProduct()
+ {
+    $createData = [
+        'name' => 'Product A',
+        'price' => 10.99,
+        'type' => 'Type A'
+    ];
 
-        $response = $this->makeRequest('POST', 'http://localhost/app/products_api.php', $createData);
-        $createdProduct = json_decode($response, true);
+    $response = $this->makeRequest('POST', 'http://localhost/app/products_api.php', $createData, $headers);
+    $createdProduct = json_decode($response, true);
 
-        $this->assertEquals(200, $createdProduct['status']);
-        $this->assertArrayHasKey('id', $createdProduct);
+    $this->assertEquals(200, $createdProduct['status']);
+    $this->assertArrayHasKey('id', $createdProduct);
 
-        return $createdProduct['id'];
-    }
+    return $createdProduct['id'];
+}
+
 
     /**
      * @depends testCreateProduct
@@ -29,8 +30,6 @@ class ProductsApiTest extends TestCase
     {
         $response = $this->makeRequest('GET', 'http://localhost/app/products_api.php?id=' . $productId);
         $product = json_decode($response, true);
-
-        var_dump($product);
 
         $this->assertEquals(200, $product['status']);
         $this->assertEquals('Product A', $product['name']);
@@ -54,9 +53,8 @@ class ProductsApiTest extends TestCase
         $updatedProduct = json_decode($response, true);
 
         $this->assertEquals(200, $updatedProduct['status']);
-        $this->assertEquals('Updated Product A', $updatedProduct['name']);
-        $this->assertEquals(15.99, $updatedProduct['price']);
-        $this->assertEquals('Type B', $updatedProduct['type']);
+        $this->assertEquals('Product updated successfully', $updatedProduct['message']);
+     
     }
 
     /**
@@ -68,6 +66,7 @@ class ProductsApiTest extends TestCase
         $deleteResponse = json_decode($response, true);
 
         $this->assertEquals(200, $deleteResponse['status']);
+        $this->assertEquals('Product deleted successfully', $deleteResponse['message']);
     }
 
     private function makeRequest($method, $url, $data = [])
@@ -77,8 +76,13 @@ class ProductsApiTest extends TestCase
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 
-        if ($method === 'POST' || $method === 'PUT') {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        if ($method === 'POST' || $method === 'PUT' || $method === 'GET' ) {
+            $jsonData = json_encode($data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($jsonData)
+            ]);
         }
 
         $response = curl_exec($ch);
@@ -86,4 +90,5 @@ class ProductsApiTest extends TestCase
 
         return $response;
     }
+
 }

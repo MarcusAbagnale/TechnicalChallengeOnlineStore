@@ -120,7 +120,6 @@
           .then(response => {
             const newProduct = response.data;
             this.products.push(newProduct);
-            $('#productTable').DataTable().row.add(newProduct).draw();
             this.resetNewProduct();
           })
           .catch(error => {
@@ -134,14 +133,16 @@
             const index = this.products.findIndex(product => product.id === updatedProduct.id);
             if (index > -1) {
               this.products.splice(index, 1, updatedProduct);
-              $('#productTable').DataTable().row(`#product-${updatedProduct.id}`).data(updatedProduct).draw();
+              $('#productTable').DataTable().destroy();
+              this.initializeDataTable();              
             }
             this.resetNewProduct();
           })
           .catch(error => {
             console.log(error);
           });
-        },
+        }
+        ,
         deleteProduct(productId) {
           axios.delete(`app/products_api.php?id=${productId}`)
           .then(response => {
