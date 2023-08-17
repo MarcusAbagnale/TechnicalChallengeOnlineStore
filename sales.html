@@ -67,15 +67,16 @@
         url: 'app/products_api.php',
         type: 'GET',
         success: function(response) {
-          var products = JSON.parse(response);
-          var select = $('#product');
-          select.empty();
+          var data = JSON.parse(response);
+      var products = data.products; // Extrair a matriz de produtos do objeto de resposta
+      var select = $('#product');
+      select.empty();
 
-          $.each(products, function(index, product) {
-            select.append($('<option></option>').attr('value', product.id).text(product.name));
-          });
-        }
+      $.each(products, function(index, product) {
+        select.append($('<option></option>').attr('value', product.id).text(product.name));
       });
+    }
+  });
 
       // Add product to cart
       $('#addBtn').click(function() {
