@@ -10,19 +10,23 @@ class ProductsAPI {
     }
 
     public function getProductById($id) {
-
         try {
             $stmt = $this->pdo->prepare('SELECT * from products where id = ?');
             $stmt->execute([$id]);
             $product = $stmt->fetch(PDO::FETCH_ASSOC);
-            $response = [
-                'id' => $product['id'],
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'type' => $product['type'],
-                'status' => 200
-            ];
-            echo json_encode($response);
+            if ($product) {
+                $response = [
+                    'id' => $product['id'],
+                    'name' => $product['name'],
+                    'price' => $product['price'],
+                    'type' => $product['type'],
+                    'status' => 200
+                ];
+                echo json_encode($response);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'Product not found']);
+            }
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to retrieve product: ' . $e->getMessage()]);
@@ -33,12 +37,9 @@ class ProductsAPI {
         try {
             $stmt = $this->pdo->query('SELECT * FROM products');
             $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+            
             $response = [
-                'id' => $productsId,
-                'name' => $products['name'],
-                'price' => $products['price'],
-                'type' => $products['type'],
+                'products' => $products,
                 'status' => 200
             ];
             echo json_encode($response);
@@ -73,7 +74,6 @@ class ProductsAPI {
             echo json_encode(['error' => 'Failed to create product: ' . $e->getMessage()]);
         }
     }
-
 
     public function updateProduct($data) {
         $id = $data['id'];
