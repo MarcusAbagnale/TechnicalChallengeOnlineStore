@@ -2,17 +2,13 @@
 
 require_once 'db_connection.php';
 
-
 function registerSale($pdo, $items) {
-
-  $pdo->beginTransaction();
-
   try {
+    $pdo->beginTransaction();
 
     $query = "INSERT INTO sales (date) VALUES (CURRENT_TIMESTAMP) RETURNING id";
     $stmt = $pdo->query($query);
     $saleId = $stmt->fetchColumn();
-
 
     $insertItemQuery = "INSERT INTO sale_items (sale_id, product_id, quantity, subtotal) VALUES (:sale_id, :product_id, :quantity, :subtotal)";
     $insertItemStmt = $pdo->prepare($insertItemQuery);
@@ -40,11 +36,15 @@ function registerSale($pdo, $items) {
   }
 }
 
+$data = json_decode(file_get_contents("php://input"), true); // Recebe os dados do corpo da requisição POST
+$items = $data['items']; // Obtém o array de itens do corpo da requisição
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'])) {
-  $items = $_POST['items'];
+var_dump($items);
 
-  $result = registerSale($pdo, $items);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+
+  $result = registerSale($pdo, $items); // Chama a função de registro de venda
 
   if ($result === true) {
     echo json_encode(['success' => true]);
@@ -54,6 +54,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'])) {
 
   exit;
 }
-
-$pdo = null;
 ?>
